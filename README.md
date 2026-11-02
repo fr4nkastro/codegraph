@@ -731,6 +731,10 @@ language or a malformed file is warned about and skipped — it never breaks
 indexing — and a project with no `codegraph.json` behaves exactly as before.
 Re-index (`codegraph index`) after adding or changing mappings.
 
+Some languages are recognized with no mapping at all — the Rice Lake iRite
+projects, for instance, index their `.iri` modules and `.src` program units
+straight out of the box, because `irite` is a built-in language id.
+
 ## Telemetry
 
 CodeGraph collects **anonymous usage statistics** — which tools and commands get
@@ -832,6 +836,7 @@ is written):
 | Astro | `.astro` | Full support (frontmatter + script extraction, template component/call references, `src/pages/` routes) |
 | Liquid | `.liquid` | Full support |
 | Pascal / Delphi | `.pas`, `.dpr`, `.dpk`, `.lpr` | Full support (classes, records, interfaces, enums, DFM/FMX form files) |
+| iRite (Rice Lake 1280) | `.iri`, `.src` | Full support (procedures, functions, handlers, records, enumerations, array and database types, module globals, `#include` edges, call and type edges — the proprietary dialect has no tree-sitter grammar, so a dedicated extractor parses it; see [docs/grammars/irite.md](docs/grammars/irite.md)) |
 | Lua | `.lua` | Full support (functions, methods with receivers, local variables, `require` imports, call edges) |
 | R | `.R` `.r` | Full support (functions in every assignment form, S4/R5/R6 classes with methods, `library`/`require` imports, `source()` file references, call edges) |
 | Luau | `.luau` | Full support (everything in Lua, plus `type`/`export type` aliases, typed signatures, and Roblox instance-path `require`) |

@@ -1,0 +1,25 @@
+-- Digital I/O helpers.
+--
+-- A routine declares its LOCALS between the header and the `begin`. The
+-- `if … then … else … end if;` chain is the dialect's conditional.
+
+    function ioReadInput(iSlot:integer; iBit: integer): integer;
+    iValue: integer;
+    begin
+        if iBit <> 0 then
+            GetDigIn(iSlot, iBit, iValue);
+            return iValue;
+        else
+            return g_cNull;
+        end if;
+    end;
+
+    function ioWriteOutput(iSlot: integer; iBit: integer; iValue: integer): SysCode;
+    sysError: SysCode;
+    begin
+        sysError:= SysInvalidRequest;
+        if iBit>0 then
+            sysError:=SetDigout(iSlot, iBit, iValue);
+        end if;
+        return sysError;
+    end;

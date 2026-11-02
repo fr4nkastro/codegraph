@@ -1,0 +1,23 @@
+-- HMI event handlers.
+--
+-- A handler is a routine bound to a 1280 UI event. It has locals and the
+-- same `begin … end;` body as any other routine.
+
+handler UserPrompt;
+    sEntry: string;
+    begin
+        sEntry:= GetEntry;
+        ClosePrompt;
+        if GetCurrentScreen = g_tScreen.Settings then
+            procHandlerSettings(sEntry);
+        elsif GetCurrentScreen = g_tScreen.Main then
+            procHandlerMain(sEntry);
+        else
+            procHandlerUnknown(sEntry);
+        end if;
+    end;
+
+handler WidgetClicked;
+    begin
+        procHandlerMain(GetEntry);
+    end;

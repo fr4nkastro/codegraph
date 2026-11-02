@@ -193,10 +193,14 @@ describe('Language Detection', () => {
     // OTP app resource files route by full suffix — `.src` alone is too generic.
     expect(detectLanguage('src/myapp.app.src')).toBe('erlang');
     expect(detectLanguage('ebin/myapp.app')).toBe('erlang');
-    expect(detectLanguage('legacy/module.src')).toBe('unknown');
+    // `.src` is the iRite program unit's extension — and a GENERIC one, so the
+    // CONTENT decides: a `.src` carrying none of the dialect's markers is not
+    // iRite, and is never indexed (the scanner rejects it on read).
+    expect(detectLanguage('legacy/module.src', 'nothing iRite in here')).toBe('unknown');
+    expect(detectLanguage('legacy/module.src', 'program main;\nbegin\nend main;')).toBe('irite');
     expect(isSourceFile('src/myapp.app.src')).toBe(true);
     expect(isSourceFile('ebin/myapp.app')).toBe(true);
-    expect(isSourceFile('legacy/module.src')).toBe(false);
+    expect(isSourceFile('legacy/module.src')).toBe(true);
   });
 
   it('should detect Solidity files', () => {

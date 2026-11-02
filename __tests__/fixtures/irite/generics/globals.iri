@@ -1,0 +1,11 @@
+-- Module-level constants and variables.
+--
+-- A global is declared as `name: Type;`, a global constant as
+-- `name: constant Type:= value;`. The `constant` modifier is what tells the
+-- two apart.
+
+    g_cEmpty: constant integer:= -1;
+    g_cMaxItems: constant integer:= 100;
+    g_bEnabled: constant boolean:= true;
+    g_dbItems: ItemsDatabase;
+    g_sUserName: string;

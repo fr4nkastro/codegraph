@@ -1,0 +1,20 @@
+-- A record type.
+--
+-- iRite records are declared with `type <Name> is record` and closed with
+-- `end record;`. The `is` may sit on its own line, as it does here.
+
+type Account is
+record
+    Id : Integer;
+    Name : String;
+    Secret : String;
+    Code: Integer;
+end record;
+
+type Item is record
+    Id : Integer;
+    Name : String;
+    Target : Real;
+    Counter : Integer;
+    Created : DateTime;
+end record;

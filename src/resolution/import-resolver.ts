@@ -242,6 +242,11 @@ function resolveImportPathUncached(
     return resolveCobolCopybook(importPath, fromFile, context);
   }
 
+  // iRite `#include` — the path names a module of the program unit.
+  if (language === 'irite') {
+    return resolveIriteInclude(importPath, fromFile, context);
+  }
+
   // Skip external/npm packages — but pass the context so the
   // bare-specifier heuristic can consult the project's tsconfig
   // alias map first (custom prefixes like `@components/*` would
@@ -488,6 +493,32 @@ export function isExternalImport(
   }
 
   return false;
+}
+
+/**
+ * Resolve an iRite `#include` to the module file it names.
+ *
+ * iRite include paths are written with Windows separators
+ * (`generics\types.iri`) and are relative to the program unit's
+ * folder — the folder holding the `.src` file — not to the including module.
+ * Both bases are tried, the including file's own directory first.
+ */
+function resolveIriteInclude(
+  importPath: string,
+  fromFile: string,
+  context: ResolutionContext
+): string | null {
+  const projectRoot = context.getProjectRoot();
+  const fromDir = path.dirname(path.join(projectRoot, fromFile));
+  const normalized = importPath.replace(/\\/g, '/');
+
+  for (const base of [fromDir, projectRoot]) {
+    const rel = path
+      .relative(projectRoot, path.resolve(base, normalized))
+      .replace(/\\/g, '/');
+    if (rel && !rel.startsWith('../') && context.fileExists(rel)) return rel;
+  }
+  return null;
 }
 
 /**
@@ -1570,6 +1601,23 @@ export function resolveViaImport(
         confidence: 0.9,
         resolvedBy: 'import',
       };
+    }
+    return null;
+  }
+
+  // iRite `#include` — resolve to the included module file (file→file edge).
+  // The iRite editor compiles a program unit together with the modules it
+  // includes as ONE program, so the include IS the module relationship, and
+  // the module's symbols are visible to the includer.
+  if (ref.language === 'irite' && ref.referenceKind === 'imports') {
+    const resolvedPath = resolveImportPath(ref.referenceName, ref.filePath, ref.language, context);
+    if (!resolvedPath) return null;
+    const basename = resolvedPath.split('/').pop()!;
+    const fileNode = context
+      .getNodesByName(basename)
+      .find((n) => n.kind === 'file' && n.filePath === resolvedPath);
+    if (fileNode) {
+      return { original: ref, targetNodeId: fileNode.id, confidence: 0.9, resolvedBy: 'import' };
     }
     return null;
   }

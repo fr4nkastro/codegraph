@@ -168,6 +168,10 @@ const CODE_FAMILY: Record<string, string> = {
   python: 'python', go: 'go', rust: 'rust', php: 'php', ruby: 'ruby', dart: 'dart',
   lua: 'lua', luau: 'lua', r: 'r', erlang: 'erlang', pascal: 'pascal', solidity: 'solidity',
   nix: 'nix', cobol: 'cobol',
+  // iRite is Pascal-shaped but a CLOSED dialect: its runtime symbols are its
+  // own, so an iRite reference must not be satisfied by a plain Pascal symbol
+  // that merely shares a name.
+  irite: 'irite',
 };
 
 export function crossesCodeBoundary(a: string, b: string): boolean {
@@ -1675,8 +1679,14 @@ export function isVisibleAcrossFiles(candidate: Node, ref: UnresolvedRef, contex
 const JS_FAMILY = new Set<string>(['typescript', 'tsx', 'javascript', 'jsx', 'vue', 'svelte', 'astro']);
 const JS_TS = new Set<string>(['typescript', 'tsx', 'javascript', 'jsx']);
 
-/** Languages whose identifiers resolve regardless of case. */
-export const CASE_INSENSITIVE_LANGUAGES = new Set<string>(['php', 'pascal', 'cfml', 'cfscript', 'cfquery', 'cobol', 'vbnet']);
+/**
+ * Languages whose identifiers resolve regardless of case.
+ *
+ * iRite joins Pascal here: it is a Pascal dialect with the same
+ * case-insensitive identifier rules, so a call site may spell a routine
+ * differently from its declaration (`SetHopperKa` vs `SetHopperKA`).
+ */
+export const CASE_INSENSITIVE_LANGUAGES = new Set<string>(['php', 'pascal', 'irite', 'cfml', 'cfscript', 'cfquery', 'cobol', 'vbnet']);
 
 /**
  * Whether a JS/TS `calls` ref is a RECEIVER-LESS call — `serialize(x)`, not

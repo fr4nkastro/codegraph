@@ -1,0 +1,24 @@
+-- String helpers.
+--
+-- `Len`, `IntegerToString` and `RealToString` are RUNTIME functions of the
+-- 1280 — they are not project symbols, so a call to them gets no edge.
+
+    function procCountCharsStr(sText: string): integer;
+    begin
+        return Len(sText);
+    end;
+
+    function procCountCharsInt(iNumber: integer): integer;
+    begin
+        return Len(IntegerToString(iNumber,0));
+    end;
+
+    function procCountCharsReal(rNumber: real; iDecimals: integer): integer;
+    begin
+        return Len(RealToString(rNumber,0,iDecimals));
+    end;
+
+    procedure procLoadStrings;
+    begin
+        DisplayStatus(IntegerToString(procCountCharsStr("ready"),0));
+    end;

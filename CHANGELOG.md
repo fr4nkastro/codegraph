@@ -12,6 +12,10 @@ and adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### New Features
+
+- Rice Lake 1280 projects written in iRite are now indexed as a first-class language. Procedures, functions and HMI event handlers come with their parameters and return types, record and enumeration types come with their members, and the module constants, variables and `#include` links between a program unit and its modules all become part of the graph — so an agent can navigate a 1280 project the way it navigates any other. Files named `.iri` and `.src` are recognized out of the box, so an iRite project no longer needs a `codegraph.json` mapping to be indexed. Because `.src` is a shared extension, a `.src` file is only treated as iRite when its content is — a `.src` belonging to some other tool stays out of the graph, exactly as before.
+
 ### Fixes
 
 - A Python module member used through the imported module, like `generic.ObjectEditView` after `from netbox.views import generic`, `serializers.ValidationError` or `utils.assert_deserialize(…)`, now also follows the package's re-exports to its definition. Before, netbox's view classes lost their `generic.*` base classes, and mealie's test helpers called through `utils.` went unresolved.

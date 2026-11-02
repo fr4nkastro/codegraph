@@ -1,0 +1,17 @@
+-- Enumerated, array and database types.
+--
+-- `type X is (a, b, c);` declares an enumeration; `type X is array[N] of T;`
+-- an array; `type X is database ("Name")` a database binding.
+
+type BatchState is (
+    StateStart,
+    StateIdle,
+    StateDone,
+    StateHalted
+);
+
+type DataType is (strType, numType);
+
+type arrItems is array[10] of Item;
+
+type ItemsDatabase is database ("Items");

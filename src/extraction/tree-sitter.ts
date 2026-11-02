@@ -31,6 +31,7 @@ import { DfmExtractor } from './dfm-extractor';
 import { VueExtractor } from './vue-extractor';
 import { MyBatisExtractor } from './mybatis-extractor';
 import { CfmlExtractor } from './cfml-extractor';
+import { IriteExtractor } from './languages/irite';
 import { tryKernelExtract, takeDeferredPreParse } from './kernel';
 import {
   getAllFrameworkResolvers,
@@ -7565,6 +7566,12 @@ export function extractFromSource(
   } else if (detectedLanguage === 'razor') {
     // Use custom extractor for ASP.NET Razor (.cshtml) / Blazor (.razor) markup
     const extractor = new RazorExtractor(filePath, source);
+    result = extractor.extract();
+  } else if (detectedLanguage === 'irite') {
+    // Use custom extractor for Rice Lake Revolution iRite (.iri/.src) — the
+    // proprietary Pascal dialect of the 1280 weighing indicator. No
+    // tree-sitter grammar exists for it.
+    const extractor = new IriteExtractor(filePath, source);
     result = extractor.extract();
   } else if (detectedLanguage === 'xml') {
     // Custom extractor for MyBatis mapper XML. Non-mapper XML returns just a

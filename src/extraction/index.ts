@@ -26,7 +26,7 @@ import { ParseWorkerPool, resolveParsePoolSize, resolveParseTimeoutMs } from './
 import { StoreWriter, StoreBundle, finalizeStoreBundle } from './store-writer';
 import { materializeKernelResult } from './kernel';
 import { detectGeneratedFile } from './generated-detection';
-import { detectLanguage, isSourceFile, isLanguageSupported, isFileLevelOnlyLanguage, initGrammars, loadGrammarsForLanguages, readGrammarWasmBytes, isMpegTransportStream, hasMpegTsExtension, MPEG_TS_SNIFF_BYTES } from './grammars';
+import { detectLanguage, isSourceFile, isLanguageSupported, isFileLevelOnlyLanguage, initGrammars, loadGrammarsForLanguages, readGrammarWasmBytes, isMpegTransportStream, hasMpegTsExtension, hasSrcExtension, isIriteSource, MPEG_TS_SNIFF_BYTES } from './grammars';
 import { loadExtensionOverrides, loadIncludeIgnoredPatterns, loadExcludePatterns, loadIncludePatterns, PROJECT_CONFIG_FILENAME } from '../project-config';
 import { isCodeGraphDataDir } from '../directory';
 import { logDebug, logWarn } from '../errors';
@@ -172,7 +172,18 @@ export function hashContent(content: string): string {
 function readSourceOrStamp(fullPath: string): string | null {
   const { stats, bytes } = readBoundedSourceSync(fullPath);
   if (bytes === null) return oversizeStamp(stats.size);
-  return isMpegTsBytes(fullPath, bytes) ? null : bytes.toString('utf8');
+  if (isMpegTsBytes(fullPath, bytes)) return null;
+  // A `.src` that is not iRite is not source: the extension is generic, so
+  // the content decides — the same rule as the MPEG transport stream.
+  if (hasSrcExtension(fullPath)) {
+    const text = bytes.toString('utf8');
+    if (!isIriteSource(text)) {
+      logDebug('Skipping .src file that is not an iRite program unit', { filePath: fullPath });
+      return null;
+    }
+    return text;
+  }
+  return bytes.toString('utf8');
 }
 
 /** Whether these bytes, read from `filePath`, are a `.ts` MPEG transport stream (#1910). */
@@ -2371,11 +2382,17 @@ export class ExtractionOrchestrator {
             }
             // Read bytes, not text: a `.ts` that is really an MPEG transport
             // stream (#1910) is recognised from its head here, at no extra I/O,
-            // and never decoded or parsed.
+            // and never decoded or parsed. A `.src` that is not an iRite
+            // program unit is the same case: the extension is generic, so the
+            // content decides.
             if (isMpegTsBytes(fp, bytes)) {
               return { filePath: fp, content: null as string | null, stats: null as fs.Stats | null, error: null as Error | null, skipped: true };
             }
             const content = bytes.toString('utf-8');
+            if (hasSrcExtension(fp) && !isIriteSource(content)) {
+              logDebug('Skipping .src file that is not an iRite program unit', { filePath: fp });
+              return { filePath: fp, content: null as string | null, stats: null as fs.Stats | null, error: null as Error | null, skipped: true };
+            }
             return { filePath: fp, content, stats, error: null as Error | null };
           } catch (err) {
             return { filePath: fp, content: null as string | null, stats: null as fs.Stats | null, error: err as Error };

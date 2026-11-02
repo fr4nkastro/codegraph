@@ -10,8 +10,16 @@ import * as path from 'path';
 import * as fsp from 'fs/promises';
 import { Parser, Language as WasmLanguage } from 'web-tree-sitter';
 import { Language } from '../types';
+import { looksLikeIrite } from './languages/irite';
 
-export type GrammarLanguage = Exclude<Language, 'svelte' | 'vue' | 'astro' | 'liquid' | 'razor' | 'yaml' | 'twig' | 'xml' | 'properties' | 'unknown'>;
+/**
+ * Languages that have a tree-sitter WASM grammar.
+ *
+ * `irite` is excluded along with the other grammar-less formats: the Rice
+ * Lake 1280 dialect is proprietary and has no grammar, so it is handled by a
+ * custom extractor (src/extraction/languages/irite.ts) instead.
+ */
+export type GrammarLanguage = Exclude<Language, 'svelte' | 'vue' | 'astro' | 'liquid' | 'razor' | 'yaml' | 'twig' | 'xml' | 'properties' | 'irite' | 'unknown'>;
 
 /**
  * WASM filename map — maps each language to its .wasm grammar file
@@ -117,6 +125,13 @@ export const EXTENSION_MAP: Record<string, Language> = {
   '.lpr': 'pascal',
   '.dfm': 'pascal',
   '.fmx': 'pascal',
+  // Rice Lake Revolution iRite (1280 HMI) — a proprietary Pascal dialect with
+  // no tree-sitter grammar; the custom IriteExtractor parses it. `.iri` is a
+  // module, `.src` the program unit that includes the modules.
+  // `.cod` is DELIBERATELY absent: it is the iRite editor's COMPILED output
+  // (a binary blob, not source), so indexing it would only add noise.
+  '.iri': 'irite',
+  '.src': 'irite',
   '.scala': 'scala',
   '.sc': 'scala',
   '.lua': 'lua',
@@ -231,6 +246,27 @@ export function isMpegTransportStream(head: Uint8Array): boolean {
 /** Whether `filePath` carries the one extension MPEG-TS shares with a language. */
 export function hasMpegTsExtension(filePath: string): boolean {
   return filePath.length > 3 && filePath.slice(-3).toLowerCase() === '.ts';
+}
+
+/**
+ * Whether `filePath` carries the `.src` extension — the iRite program unit's.
+ */
+export function hasSrcExtension(filePath: string): boolean {
+  return filePath.length > 4 && filePath.slice(-4).toLowerCase() === '.src';
+}
+
+/**
+ * Whether a source is an iRite program unit.
+ *
+ * `.src` is the extension of the iRite program unit, and a GENERIC one: the
+ * Erlang OTP resource file `<app>.app.src` has it too, and other tools use
+ * it for unrelated text. So the CONTENT decides, the same way a `.ts` that is
+ * really an MPEG transport stream is recognised from its bytes (#1910). A
+ * `.src` carrying none of the dialect's markers is not iRite and is never
+ * indexed.
+ */
+export function isIriteSource(source: string | null | undefined): boolean {
+  return typeof source === 'string' && source.length > 0 && looksLikeIrite(source);
 }
 
 /**
@@ -550,6 +586,15 @@ export function detectLanguage(filePath: string, source?: string, overrides?: Re
   if (isErlangAppFile(filePath)) return 'erlang';
   const lang = (overrides && overrides[ext]) || EXTENSION_MAP[ext] || 'unknown';
 
+  // `.src` is the iRite program unit's extension — and a GENERIC one (the
+  // Erlang resource file above has it too, and other tools use it). So the
+  // CONTENT decides: a `.src` that carries none of the dialect's markers is
+  // not iRite, and says so. Without a source there is nothing to judge, and
+  // the extension's owner takes it.
+  if (lang === 'irite' && ext === '.src' && source !== undefined && !isIriteSource(source)) {
+    return 'unknown';
+  }
+
   // A Flow-typed `.js` (`// @flow` in its leading comments) parses as TSX:
   // the JavaScript grammar can't read its annotations — `render(): React.Node`
   // cut a class short — and TypeScript's syntax covers most of Flow's.
@@ -659,6 +704,7 @@ export function isLanguageSupported(language: Language): boolean {
   if (language === 'astro') return true; // custom extractor (frontmatter/script block delegation)
   if (language === 'liquid') return true; // custom regex extractor
   if (language === 'razor') return true; // custom RazorExtractor (.cshtml/.razor markup)
+  if (language === 'irite') return true; // custom IriteExtractor (.iri/.src — Rice Lake 1280 HMI)
   if (language === 'yaml') return true; // file-level tracking only; Drupal routing extraction via framework resolver
   if (language === 'twig') return true; // file-level tracking only
   if (language === 'xml') return true; // MyBatis mapper extractor
@@ -672,6 +718,7 @@ export function isLanguageSupported(language: Language): boolean {
  */
 export function isGrammarLoaded(language: Language): boolean {
   if (language === 'svelte' || language === 'vue' || language === 'astro' || language === 'liquid' || language === 'razor') return true;
+  if (language === 'irite') return true; // no WASM grammar needed — custom extractor
   if (language === 'yaml' || language === 'twig') return true; // no WASM grammar needed
   if (language === 'xml' || language === 'properties') return true; // no WASM grammar needed
   return languageCache.has(language);
@@ -694,7 +741,7 @@ export function isFileLevelOnlyLanguage(language: Language): boolean {
  * Get all supported languages (those with grammar definitions).
  */
 export function getSupportedLanguages(): Language[] {
-  return [...(Object.keys(WASM_GRAMMAR_FILES) as GrammarLanguage[]), 'svelte', 'vue', 'astro', 'liquid'];
+  return [...(Object.keys(WASM_GRAMMAR_FILES) as GrammarLanguage[]), 'svelte', 'vue', 'astro', 'liquid', 'irite'];
 }
 
 /**
@@ -764,6 +811,7 @@ export function getLanguageDisplayName(language: Language): string {
     astro: 'Astro',
     liquid: 'Liquid',
     pascal: 'Pascal / Delphi',
+    irite: 'iRite (Rice Lake 1280)',
     scala: 'Scala',
     lua: 'Lua',
     luau: 'Luau',

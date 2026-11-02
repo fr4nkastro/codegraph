@@ -100,6 +100,10 @@ export const LANGUAGES = [
   'astro',
   'liquid',
   'pascal',
+  // Rice Lake Revolution iRite — the proprietary Pascal dialect of the 1280
+  // weighing indicator. No tree-sitter grammar exists; a custom extractor
+  // parses it (src/extraction/languages/irite.ts).
+  'irite',
   'scala',
   'lua',
   'luau',

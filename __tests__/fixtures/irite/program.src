@@ -1,0 +1,34 @@
+-- iRite program unit.
+--
+-- The `.src` file is the entry point of a 1280 project: it includes the
+-- modules that make up the program. The include ORDER matters, because the
+-- editor compiles the unit and everything it includes as one program.
+
+program main;
+
+    --Includes
+    #include types\records.iri
+    #include types\enums.iri
+    #include generics\globals.iri
+    #include generics\strings.iri
+    #include generics\io.iri
+    #include handlers.iri
+
+    --Rutinas
+    procedure procStartSystem;
+    begin
+        DisplayStatus("");
+        procLoadStrings();
+    end;
+
+    function procGetSourceNumber(iSource: integer): integer;
+        iNumber: integer;
+    begin
+        iNumber := iSource + 1;
+        return iNumber;
+    end;
+
+    --Program StartUp
+    begin
+        procStartSystem();
+    end main;
