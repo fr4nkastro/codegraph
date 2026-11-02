@@ -1684,7 +1684,7 @@ const JS_TS = new Set<string>(['typescript', 'tsx', 'javascript', 'jsx']);
  *
  * iRite joins Pascal here: it is a Pascal dialect with the same
  * case-insensitive identifier rules, so a call site may spell a routine
- * differently from its declaration (`SetHopperKa` vs `SetHopperKA`).
+ * differently from its declaration (`SetLabelKa` vs `SetLabelKA`).
  */
 export const CASE_INSENSITIVE_LANGUAGES = new Set<string>(['php', 'pascal', 'irite', 'cfml', 'cfscript', 'cfquery', 'cobol', 'vbnet']);
 
